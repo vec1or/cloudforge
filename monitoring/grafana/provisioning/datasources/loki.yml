@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: loki
+    uid: bg1ignwmtzfuod
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    editable: true

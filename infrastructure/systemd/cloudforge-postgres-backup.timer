@@ -1,0 +1,10 @@
+[Unit]
+Description=Run CloudForge PostgreSQL Backup Daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+Unit=cloudforge-postgres-backup.service
+
+[Install]
+WantedBy=timers.target

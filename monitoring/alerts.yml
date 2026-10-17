@@ -1,0 +1,11 @@
+groups:
+  - name: flask-alerts
+    rules:
+      - alert: FlaskDown
+        expr: up{job="flask-app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Flask application is down"
+          description: "Prometheus cannot scrape Flask metrics."

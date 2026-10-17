@@ -1,0 +1,43 @@
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+local.file_match "k3s_flask" {
+  path_targets = [
+    {
+      __path__  = "/var/log/pods/devops-helm_demo-app-flask-*/flask/*.log",
+      job       = "kubernetes-flask",
+      namespace = "devops-helm",
+      container = "flask",
+    },
+  ]
+  sync_period = "10s"
+}
+
+loki.source.file "k3s_flask" {
+  targets    = local.file_match.k3s_flask.targets
+  forward_to = [loki.write.local.receiver]
+}
