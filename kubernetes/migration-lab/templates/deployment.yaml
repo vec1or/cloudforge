@@ -1,0 +1,23 @@
+{{- if .Values.deployment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: migration-nginx
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: migration-nginx
+  template:
+    metadata:
+      labels:
+        app: migration-nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+{{- end }}

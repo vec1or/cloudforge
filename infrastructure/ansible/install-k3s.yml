@@ -1,0 +1,58 @@
+---
+- name: Install K3s on Ubuntu Server
+  hosts: cloudforge
+  become: true
+  gather_facts: true
+
+  vars:
+    k3s_version: "v1.36.5+k3s1"
+
+  tasks:
+    - name: Check existing K3s installation
+      ansible.builtin.stat:
+        path: /usr/local/bin/k3s
+      register: k3s_binary
+
+    - name: Download K3s installation script
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: /tmp/cloudforge-install-k3s.sh
+        mode: "0755"
+      when: not k3s_binary.stat.exists
+
+    - name: Install K3s
+      ansible.builtin.command:
+        cmd: /bin/sh /tmp/cloudforge-install-k3s.sh
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+      when: not k3s_binary.stat.exists
+
+    - name: Ensure K3s service is running
+      ansible.builtin.systemd_service:
+        name: k3s
+        state: started
+        enabled: true
+      when: not ansible_check_mode
+
+    - name: Check Kubernetes node
+      ansible.builtin.command:
+        cmd: /usr/local/bin/k3s kubectl get nodes
+      register: k3s_nodes
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Show Kubernetes nodes
+      ansible.builtin.debug:
+        var: k3s_nodes.stdout_lines
+      when: not ansible_check_mode
+
+    - name: Install K3s
+      ansible.builtin.command:
+        cmd: /bin/sh /tmp/cloudforge-install-k3s.sh
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+      when:
+        - not k3s_binary.stat.exists
+        - not ansible_check_mode

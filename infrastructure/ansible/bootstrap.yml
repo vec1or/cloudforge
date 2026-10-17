@@ -1,0 +1,60 @@
+---
+- name: CloudForge Ubuntu Server Bootstrap
+  hosts: cloudforge
+  become: true
+  gather_facts: true
+
+  vars:
+    cloudforge_packages:
+      - curl
+      - git
+      - htop
+      - tree
+      - jq
+      - ca-certificates
+      - unzip
+
+  tasks:
+    - name: Install required system packages
+      ansible.builtin.apt:
+        name: "{{ cloudforge_packages }}"
+        state: present
+        update_cache: false
+
+    - name: Check K3s installation
+      ansible.builtin.stat:
+        path: /usr/local/bin/k3s
+      register: k3s_binary
+
+    - name: Report K3s installation status
+      ansible.builtin.debug:
+        msg: >-
+          K3s installed: {{ k3s_binary.stat.exists }}
+
+    - name: Check K3s service
+      ansible.builtin.command:
+        cmd: systemctl is-active k3s
+      register: k3s_status
+      changed_when: false
+      failed_when: false
+      when: k3s_binary.stat.exists
+
+    - name: Report K3s service status
+      ansible.builtin.debug:
+        msg: >-
+          K3s service: {{ k3s_status.stdout | default('not installed') }}
+
+    - name: Check Kubernetes nodes
+      ansible.builtin.command:
+        cmd: /usr/local/bin/k3s kubectl get nodes
+      register: kubernetes_nodes
+      changed_when: false
+      when:
+        - k3s_binary.stat.exists
+        - k3s_status.rc == 0
+
+    - name: Show Kubernetes nodes
+      ansible.builtin.debug:
+        var: kubernetes_nodes.stdout_lines
+      when:
+        - kubernetes_nodes is not skipped

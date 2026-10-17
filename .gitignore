@@ -1,0 +1,32 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+
+# Vagrant
+**/.vagrant/
+
+# Credentials
+.env
+.env.*
+*.pem
+*.key
+kubeconfig
+k3s.yaml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Editors and OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Helm template backups
+**/templates.backup/

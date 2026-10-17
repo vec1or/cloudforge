@@ -1,0 +1,40 @@
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-24.04"
+
+  config.vm.hostname = "cloudforge-test"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "cloudforge-test"
+    vb.memory = 2048
+    vb.cpus = 2
+  end
+
+  config.vm.network "forwarded_port",
+    guest: 22,
+    host: 2223,
+    host_ip: "127.0.0.1",
+    auto_correct: true
+
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "ansible/bootstrap.yml"
+    ansible.install = true
+    ansible.groups = {
+      "cloudforge" => ["default"]
+    }
+    ansible.extra_vars = {
+      "ansible_become" => true
+    }
+  end
+
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "ansible/install-k3s.yml"
+    ansible.install = false
+    ansible.groups = {
+      "cloudforge" => ["default"]
+    }
+    ansible.extra_vars = {
+      "ansible_become" => true
+    }
+  end
+end

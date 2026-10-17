@@ -1,0 +1,29 @@
+flask:
+  image: ghcr.io/vec1or/demo-app:33fd9f96ca9d3323e90aa748003a12bbf6b9a2d3
+  imagePullPolicy: Always
+  replicas: 2
+  port: 5000
+  environment: development
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+  deployment:
+    enabled: true
+
+postgres:
+  image: postgres:17
+  user: devops
+  database: demoapp
+  storage: 1Gi
+  storageClass: local-path
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"

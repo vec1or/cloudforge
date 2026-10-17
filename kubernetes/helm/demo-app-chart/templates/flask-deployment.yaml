@@ -1,0 +1,79 @@
+{{- if .Values.flask.deployment.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-flask
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  replicas: {{ .Values.flask.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-flask
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-flask
+    spec:
+      terminationGracePeriodSeconds: 30
+      
+      containers:
+        - name: flask
+          image: {{ .Values.flask.image | quote }}
+          imagePullPolicy: {{ .Values.flask.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.flask.port }}
+          resources:
+{{ toYaml .Values.flask.resources | nindent 12 }}
+
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: APP_ENV
+
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: PORT
+
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: POSTGRES_HOST
+
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.database | quote }}
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.flask.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.flask.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+{{- end }}

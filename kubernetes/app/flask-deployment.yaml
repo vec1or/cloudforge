@@ -1,0 +1,84 @@
+---
+# Source: demo-app-chart/templates/flask-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app-flask
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: demo-app-flask
+  template:
+    metadata:
+      labels:
+        app: demo-app-flask
+    spec:
+      terminationGracePeriodSeconds: 30
+      
+      containers:
+        - name: flask
+          image: "ghcr.io/vec1or/demo-app:33fd9f96ca9d3323e90aa748003a12bbf6b9a2d3"
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          resources:
+
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-app-config
+                  key: APP_ENV
+
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-app-config
+                  key: PORT
+
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: demo-app-config
+                  key: POSTGRES_HOST
+
+            - name: POSTGRES_USER
+              value: "devops"
+
+            - name: POSTGRES_DB
+              value: "demoapp"
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
